@@ -1,11 +1,10 @@
 import pygame
 import math
 from enum import Enum
-from typing import List, Tuple
+from typing import Tuple
 import os
 from datetime import datetime
 import Control
-import TurtleGraphics
 
 class ControlPanel:
     def __init__(self, x, y, w, h):
@@ -14,17 +13,20 @@ class ControlPanel:
 
         self.radiusSpinBox = Control.Spinbox(120, 40, 70, 30, 10, 300, radius, 10, self.radius_spinbox_changed)
         self.radiusLabel = Control.Label(5, 40, 70, 30, "radius:")
-        self.sidesSpinBox = Control.Spinbox(120, 80, 70, 30, 3, 50, 3, 1, self.sides_spinbox_changed)
+        self.sidesSpinBox = Control.Spinbox(120, 80, 70, 30, 1, 50, 3, 1, self.sides_spinbox_changed)
         self.sidesLabel = Control.Label(5, 80, 70, 30, "sides:")
         self.polyButton = Control.Button(10, 120, 180, 30, "Draw Polygon", self.polygon_button_clicked)
+        self.reverseCheck = Control.CheckBox(10, 160, 20, 20, "Reverse Vertices", True, self.reverse_checkbox_changed)
         self.levelSpinBox = Control.Spinbox(120, 200, 70, 30, 0, 6, 3, 1, self.level_spinbox_changed)
         self.levelLabel = Control.Label(5, 200, 70, 30, "level(1-6):")
-        self.angleSpinBox = Control.Spinbox(120, 240, 70, 30, 0, 89, 60, 1, self.angle_spinbox_changed)
-        self.angleLabel = Control.Label(5, 240, 70, 30, "angle:")
-        self.kochButton = Control.Button(10, 280, 180, 30, "Koch Snowflake", self.koch_button_clicked)
-        self.gosperSnowflakeButton = Control.Button(10, 320, 180, 30, "Gosper Snowflake", self.gosper_snowflake_button_clicked)
-        self.gosperButton = Control.Button(10, 400, 180, 30, "Gosper Curve", self.gosper_button_clicked)
-        self.tileGosperButton = Control.Button(10, 440, 180, 30, "Tile Gosper", self.tile_gosper_button_clicked)
+        self.kochButton = Control.Button(10, 240, 180, 30, "Koch Snowflake", self.koch_button_clicked)
+        self.gosperSnowflakeButton = Control.Button(10, 280, 180, 30, "Gosper Snowflake", self.gosper_snowflake_button_clicked)
+        self.squareFlakeButton = Control.Button(10, 320, 180, 30, "Square Snowflake", self.square_flake_button_clicked)
+        self.sevenFlakeButton = Control.Button(10, 360, 180, 30, "7 Segment", self.seven_flake_button_clicked)
+        self.eightFlakeButton = Control.Button(10, 400, 180, 30, "8 Segment", self.eight_flake_button_clicked)
+        self.eightteenFlakeButton = Control.Button(10, 440, 180, 30, "18 Segment", self.eighteen_flake_button_clicked)
+        self.thirtytwoFlakeButton = Control.Button(10, 480, 180, 30, "32 Segment", self.thirtytwo_flake_button_clicked)
+        self.fiftyFlakeButton = Control.Button(10, 520, 180, 30, "50 Segment", self.fifty_flake_button_clicked)
 
     def draw(self, screen):
         pygame.draw.rect(screen, 'lightblue', self.rect)
@@ -33,20 +35,23 @@ class ControlPanel:
         self.sidesSpinBox.draw(screen)
         self.sidesLabel.draw(screen)
         self.polyButton.draw(screen)
+        self.reverseCheck.draw(screen)
         self.kochButton.draw(screen)
         self.levelSpinBox.draw(screen)
         self.levelLabel.draw(screen)
-        self.angleSpinBox.draw(screen)
-        self.angleLabel.draw(screen)
+        self.squareFlakeButton.draw(screen)
+        self.sevenFlakeButton.draw(screen)
+        self.eightFlakeButton.draw(screen)
+        self.eightteenFlakeButton.draw(screen)
+        self.thirtytwoFlakeButton.draw(screen)
         self.gosperSnowflakeButton.draw(screen)
-        self.gosperButton.draw(screen)
-        self.tileGosperButton.draw(screen)
+        self.fiftyFlakeButton.draw(screen)
 
     def handle_events(self, event):
         self.radiusSpinBox.handle_events(event)
         self.sidesSpinBox.handle_events(event)
+        self.reverseCheck.handle_events(event)
         self.levelSpinBox.handle_events(event)
-        self.angleSpinBox.handle_events(event)
 
     def radius_spinbox_changed(self, value):
         global radius
@@ -59,6 +64,10 @@ class ControlPanel:
     def polygon_button_clicked(self):
         global drawing_mode
         drawing_mode = DrawingMode.POLYGON
+    
+    def reverse_checkbox_changed(self, value):
+        global reverse
+        reverse = value
 
     def koch_button_clicked(self):
         global drawing_mode
@@ -68,205 +77,155 @@ class ControlPanel:
         global level
         level = value
     
-    def angle_spinbox_changed(self, value):
-        global angle
-        angle = value
+    def square_flake_button_clicked(self):
+        global drawing_mode
+        drawing_mode = DrawingMode.SQUARE_FLAKE
+        
+    def seven_flake_button_clicked(self):
+        global drawing_mode
+        drawing_mode = DrawingMode.SEVEN_SEGMENT
+    
+    def eight_flake_button_clicked(self):
+        global drawing_mode
+        drawing_mode = DrawingMode.EIGHT_SEGMENT
+    
+    def eighteen_flake_button_clicked(self):
+        global drawing_mode
+        drawing_mode = DrawingMode.EIGHTEEN_SEGMENT
+
+    def thirtytwo_flake_button_clicked(self):
+        global drawing_mode
+        drawing_mode = DrawingMode.THIRTYTWO_SEGMENT
+    
+    def fifty_flake_button_clicked(self):
+        global drawing_mode
+        drawing_mode = DrawingMode.FIFTY_SEGMENT
 
     def gosper_snowflake_button_clicked(self):
         global drawing_mode
         drawing_mode = DrawingMode.GOSPER_SNOWFLAKE
 
-    def gosper_button_clicked(self):
-        global drawing_mode
-        drawing_mode = DrawingMode.GOSPER
-    
-    def tile_gosper_button_clicked(self):
-        global drawing_mode
-        drawing_mode = DrawingMode.TILE_GOSPER
-
 Point = Tuple[float, float]
 
-class Koch:
-    def __init__(self, vertices, angle_degrees=60):
-        self.vertices = vertices
-        self.angle_rad = math.radians(angle_degrees)
-        self.cos_angle = math.cos(self.angle_rad)
-        self.sin_angle = math.sin(self.angle_rad)
-        self.dist_factor = 1 / (2 * (1 + self.cos_angle))
-        #self.dist_factor = 1 / 3
-
-    def draw(self, surface, level):
-        sides = list(zip(self.vertices, self.vertices[1:] + self.vertices[:1])) # List[Tuple[Point, Point]]
-        [self.draw_side(surface, level, side) for side in sides]
-
-    def draw_side(self, surface, level, side: Tuple[Point, Point]):
-        pt1, pt2 = side
-        if level == 0:
-            pygame.draw.line(surface, 'green', pt1, pt2, 2)
-        else:
-            pt3, pt4, pt5 = self._calculate_triangle_points(pt1, pt2) # form a triangle
-
-            for new_side in [(pt1, pt3), (pt3, pt5), (pt5, pt4), (pt4, pt2)]:
-                self.draw_side(surface, level - 1, new_side)
-
-    def _calculate_triangle_points(self, pt1: Point, pt2: Point) -> Tuple[Point, Point, Point]:
-        x1, y1 = pt1
-        x2, y2 = pt2
-
-        # calculate pt3 and pt4 using weighted average
-        w = self.dist_factor
-        pt3 = ((1 - w) * x1 + w * x2, (1 - w) * y1 + w * y2)
-        pt4 = (w * x1 + (1 - w) * x2, w * y1 + (1 - w) * y2)
-
-        dx, dy = pt4[0] - pt3[0], pt4[1] - pt3[1] # vector from pt3 to pt4
-
-        distance = math.sqrt(dx ** 2 + dy ** 2) # distance from pt3 to pt4
-        xm, ym = (pt3[0] + pt4[0]) / 2, (pt3[1] + pt4[1]) / 2 # midpoint of pt3 and pt4
-        h = distance / 2 * math.tan(self.angle_rad) # height of the triangle
-        dx_norm, dy_norm = dx / distance, dy / distance # normalize the vector
-        px, py = -dy_norm, dx_norm # perpendicular vector
-
-        # find the peak of the triangle
-        pt5 = ( xm + h * px, ym + h * py)
-
-        return pt3, pt4, pt5
-
-class GosperCurve:
-    def __init__(self, turtle):
-        self.turtle = turtle
-        self.endpoints = []
-
-    def draw_gosper_generator(self, order, size):
-        if order == 0:
-            self.turtle.forward(size)
-        else:
-            self.draw_gosper_generator(order-1, size)
-            self.turtle.turn(60)
-            self.draw_gosper_generator(order-1, size)
-            self.turtle.turn(-60)
-            self.draw_gosper_generator(order-1, size)
-
-    def gosper_curve(self, order, size, save_endpoints=False):
-        for _ in range(6):
-            if save_endpoints:
-                self.endpoints.append(self.turtle.pos())
-            self.draw_gosper_generator(order, size)
-            self.turtle.turn(-60)
-   
-    def draw(self):
-        order = 3
-        size = 10
-        self.turtle.lineThickness(2)
-        self.turtle.forward(-150, False)
-        self.gosper_curve(order, size)
-
-    def tile(self):
-        order = 3
-        size = 3
-        cx, cy = self.turtle.center()
-        self.turtle.moveTo(50, cy + 200)
-        x0, y0 = self.turtle.pos()
-
-        self.gosper_curve(order, size, True)
-
-        row_deltax = self.endpoints[2][0] - self.endpoints[0][0]
-        row_deltay = self.endpoints[2][1] - self.endpoints[0][1]
-        col_deltax = self.endpoints[4][0] - self.endpoints[0][0]
-        col_deltay = self.endpoints[4][1] - self.endpoints[0][1]
-
-        for c in range(4):
-            for r in range(3):
-                self.turtle.moveTo(x0+(r-c)*row_deltax+(r+c)*col_deltax, y0+(r-c)*row_deltay+(r+c)*col_deltay)
-                self.gosper_curve(order, size)
-                self.turtle.moveTo(x0+(r-c)*row_deltax+(r+c+1)*col_deltax, y0+(r-c)*row_deltay+(r+c+1)*col_deltay)
-                self.gosper_curve(order, size)
-
-class GosperSnowflake:
-    def __init__(self, vertices):
-        self.vertices = vertices
-        self.dist_factor = math.sqrt(7)
-
-    def draw(self, surface, level):
-        sides = list(zip(self.vertices, self.vertices[1:] + self.vertices[:1])) # List[Tuple[Point, Point]]
-        [self.draw_side(surface, level, side) for side in sides]
+class SnowFlake:
+    def __init__(self, initiator, generator, dist_factor):
+        self.initiator = initiator # a list of lines
+        self.generator = generator # a list of angles
+        self.dist_factor = dist_factor
+        
+    def draw(self, canvas, level):
+        [self.draw_side(canvas, level, line) for line in self.initiator]
     
-    def draw_side(self, surface, level, side: Tuple[Point, Point]):
-        pt1, pt2 = side
+    def draw_side(self, canvas, level, line: Tuple[Point, Point]):
+        pt1, pt2 = line
         if level == 0:
-            pygame.draw.line(surface, 'green', pt1, pt2, 2)
+            pygame.draw.line(canvas, 'green', pt1, pt2, 2)
         else:
-            angle = math.atan2(pt2[1] - pt1[1], pt2[0] - pt1[0]) * 180 / math.pi
+            angle = math.atan2(pt2[1] - pt1[1], pt2[0] - pt1[0])
             length = math.sqrt((pt2[0] - pt1[0]) ** 2 + (pt2[1] - pt1[1]) ** 2)
-            length /= math.sqrt(7)
+            length /= self.dist_factor
             x1, y1 = pt1
-            for a in [19.12, -60 + 19.12, 19.12]:
-                current_angle = angle + a
-                x2 = x1 + length * math.cos(current_angle * math.pi / 180)
-                y2 = y1 + length * math.sin(current_angle * math.pi / 180)
+            theta = 0
+            for gen_angle in self.generator:
+                theta += gen_angle * math.pi / 180
+                current_angle = angle + theta
+                x2 = x1 + length * math.cos(current_angle)
+                y2 = y1 + length * math.sin(current_angle)
                 pt1, pt2 = (x1,y1), (x2, y2)
-                self.draw_side(surface, level-1, (pt1, pt2))
+                self.draw_side(canvas, level-1, (pt1, pt2))
                 x1, y1 = x2, y2
 
-def calculate_vertices(num_sides, radius, center_x, center_y):
+def calculate_vertices(num_sides, radius, center_x, center_y, start_angle=0.0):
     vertices = []
-    for angle in [2 * math.pi * n / num_sides for n in range(num_sides)]:
+    for n in range(num_sides):
+        angle = 2 * math.pi * n / num_sides + start_angle
         x = center_x + radius * math.cos(angle)
         y = center_y + radius * math.sin(angle)
         vertices.append((x, y))
-    return vertices[::-1]
+    return vertices #[::-1]
+
+def vertices_to_sides(vertices):
+    return list(zip(vertices, vertices[1:] + vertices[:1]))
 
 class DrawingMode(Enum):
     NONE = 0
     POLYGON = 1
     KOCH = 2
-    GOSPER_SNOWFLAKE = 3
-    GOSPER = 4
-    TILE_GOSPER = 5
-    MULTI = 6
+    SQUARE_FLAKE = 3
+    SEVEN_SEGMENT = 4
+    EIGHT_SEGMENT = 5
+    EIGHTEEN_SEGMENT = 6
+    THIRTYTWO_SEGMENT = 7
+    FIFTY_SEGMENT = 8
+    GOSPER_SNOWFLAKE = 9
 
 drawing_mode = DrawingMode.NONE
 level = 3
-radius = 200
+radius = 250
 num_sides = 3
-angle = 60
+reverse = True
 
-def multi_draw(drawing_surface):
-    width, height = drawing_surface.get_size()
-    drawing_surface.fill('black')
+def update(canvas):
+    global drawing_mode, level, radius, num_sides, angle
 
-    radius = min(width, height) / 4 - 20
+    canvas.fill('black')
+    cx, cy = canvas.get_rect().center
 
-    level = 3
-    cx, cy = width / 4, height / 4
-    num_sides = 3
-    angle = 60
-    polygon = calculate_vertices(num_sides, radius, cx, cy)
-    snowflake = Koch(polygon, angle)
-    snowflake.draw(drawing_surface, level)
+    initiator = []
+    if num_sides > 2:
+        start_angle = math.pi / 2 - math.pi / num_sides # keep flat side down
+        vertices = calculate_vertices(num_sides, radius, cx, cy, start_angle) # regular polygon
+        if reverse:
+            vertices = vertices[::-1]
+        initiator = vertices_to_sides(vertices)
+    elif num_sides == 2:
+        initiator = [((cx - radius, cy - radius), (cx + radius, cy - radius)),
+                     ((cx + radius, cy + radius), (cx - radius, cy + radius))] # 2 lines
+    elif num_sides == 1:
+        initiator = [((cx + radius, cy), (cx - radius, cy))] # line
+    
+    if drawing_mode == DrawingMode.POLYGON:
+        if num_sides > 2:
+            pygame.draw.polygon(canvas, 'green', vertices, 2)
+        else:
+            for line in initiator:
+                pygame.draw.line(canvas, 'green', line[0], line[1], 2)   
+    else:
+        gen_angles = []
+        if drawing_mode == DrawingMode.KOCH:
+            dist_factor = 3
+            gen_angles = [0, 60, -120, 60]
+        elif drawing_mode == DrawingMode.SQUARE_FLAKE:
+            dist_factor = math.sqrt(5)
+            gen_angles = [26.5, -90, 90]
+        elif drawing_mode == DrawingMode.SEVEN_SEGMENT:
+            dist_factor = 3
+            gen_angles = [0, -60, -60, 120, 60, 60, -120]
+        elif drawing_mode == DrawingMode.GOSPER_SNOWFLAKE:
+            dist_factor = math.sqrt(7)
+            gen_angles = [19.12, -60, 60]
+        elif drawing_mode == DrawingMode.EIGHT_SEGMENT:
+            dist_factor = 4
+            gen_angles = [0, -90, 90, 90, 0, -90, -90, 90]
+        elif drawing_mode == DrawingMode.EIGHTEEN_SEGMENT:
+            dist_factor = 6
+            gen_angles = [0, -90, 0, 90, 0, 90, 90, -90, -90, 0, 90, 90, -90, -90, 0, -90, 0, 90]
+        elif drawing_mode == DrawingMode.THIRTYTWO_SEGMENT:
+            dist_factor = 8
+            gen_angles = [-90, 90, -90, -90, 90, 90, 0, -90, 90, 90, 0, 90, -90, -90, 0, 90,
+                        0, -90, 0, 90, 90, -90, 0, -90, -90, 90, 0, -90, -90, 90, 90, -90]
+        elif drawing_mode == DrawingMode.FIFTY_SEGMENT:
+            dist_factor = 10
+            gen_angles = [0, -90, 90, 90, 0, 0, -90, 0, 90, 0,
+                        -90, -90, 0, 0, -90, 0, 90, 0, 0, 0,
+                        90, 90, 0, 0, -90, 0, 90, 0, 0, -90,
+                        -90, 0, 0, 0, -90, 0, 90, 0, 0, 90,
+                        90, 0, -90, 0, 90, 0, 0, -90, -90, 90]
+        else:
+            return
 
-    level = 2
-    cx, cy = width - width / 4, height / 4
-    num_sides = 3
-    angle = 80
-    polygon = calculate_vertices(num_sides, radius, cx, cy)
-    snowflake = Koch(polygon, angle)
-    snowflake.draw(drawing_surface, level)
-
-    level = 3
-    cx, cy = width / 4, height - height / 4
-    num_sides = 4
-    angle = 80
-    polygon = calculate_vertices(num_sides, radius, cx, cy)
-    snowflake = Koch(polygon, angle)
-    snowflake.draw(drawing_surface, level)
-
-    level = 6
-    cx, cy = width - width / 4, height - height / 4
-    num_sides = 3
-    angle = 80
-    polygon = calculate_vertices(num_sides, radius, cx, cy)
-    snowflake = Koch(polygon, angle)
-    snowflake.draw(drawing_surface, level)
+        snowflake = SnowFlake(initiator, gen_angles, dist_factor)
+        snowflake.draw(canvas, level)
 
 def save_screen(screen):
     if not os.path.exists("screenshots"):
@@ -280,19 +239,18 @@ def save_screen(screen):
 def main():
     global drawing_mode, level, radius, num_sides, angle
     pygame.init()
-    width, height = 800, 600
-    #width, height = 1280, 720
+    #width, height = 800, 600
+    width, height = 1280, 720
     screen = pygame.display.set_mode((width, height))
     pygame.display.set_caption("Snowflakes")
     clock = pygame.time.Clock()
 
     border_width = 5
     cp_width, cp_height = 200, height - 2 * border_width
-    surface_width, surface_height = width - cp_width - 3 * border_width, height - 2 * border_width
-    
     cp = ControlPanel(border_width, border_width, cp_width, cp_height)
 
-    drawing_surface = pygame.Surface((surface_width, surface_height))
+    canvas_width, canvas_height = width - cp_width - 3 * border_width, height - 2 * border_width
+    canvas = pygame.Surface((canvas_width, canvas_height))
 
     running = True
     while running:
@@ -303,48 +261,16 @@ def main():
                 if event.key == pygame.K_s:
                     save_screen(screen)
                 if event.key == pygame.K_d:
-                    save_screen(drawing_surface)
-                if event.key == pygame.K_m:
-                    drawing_mode = DrawingMode.MULTI
-                    multi_draw(drawing_surface)
+                    save_screen(canvas)
             cp.handle_events(event)
 
         screen.fill('gray')
 
         cp.draw(screen)
 
-        if drawing_mode == DrawingMode.POLYGON:
-            if num_sides > 2:
-                cx, cy = drawing_surface.get_rect().center
-                polygon = calculate_vertices(num_sides, radius, cx, cy)
-                drawing_surface.fill('black')
-                pygame.draw.polygon(drawing_surface, 'green', polygon, 2)
-        elif drawing_mode == DrawingMode.KOCH:
-            if level >= 0:
-                cx, cy = drawing_surface.get_rect().center
-                polygon = calculate_vertices(num_sides, radius, cx, cy)
-                snowflake = Koch(polygon, angle)
-                drawing_surface.fill('black')
-                snowflake.draw(drawing_surface, level)
-        elif drawing_mode == DrawingMode.GOSPER_SNOWFLAKE:
-            if level >= 0:
-                cx, cy = drawing_surface.get_rect().center
-                polygon = calculate_vertices(num_sides, radius, cx, cy)
-                snowflake = GosperSnowflake(polygon)
-                drawing_surface.fill('black')
-                snowflake.draw(drawing_surface, level)
-        elif drawing_mode == DrawingMode.GOSPER:
-            tg = TurtleGraphics.TurtleGraphics(drawing_surface)
-            snowflake = GosperCurve(tg)
-            drawing_surface.fill('black')
-            snowflake.draw()
-        elif drawing_mode == DrawingMode.TILE_GOSPER:
-            tg = TurtleGraphics.TurtleGraphics(drawing_surface)
-            snowflake = GosperCurve(tg)
-            drawing_surface.fill('black')
-            snowflake.tile()
+        update(canvas)
 
-        screen.blit(drawing_surface, (cp_width + 2 * border_width, border_width))
+        screen.blit(canvas, (cp_width + 2 * border_width, border_width))
 
         pygame.display.flip()
         clock.tick(60)
